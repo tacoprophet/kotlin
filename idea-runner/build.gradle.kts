@@ -26,7 +26,7 @@ val runIde by task<JavaExec> {
     val ideaPluginDir: File by rootProject.extra
 
     jvmArgs(
-            "-Xmx1250m",
+            "-Xmx1600m",
             "-XX:ReservedCodeCacheSize=240m",
             "-XX:+HeapDumpOnOutOfMemoryError",
             "-ea",
