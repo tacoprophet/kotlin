@@ -17,12 +17,14 @@
 package org.jetbrains.uast.test.env
 
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.lang.MetaLanguage
 import com.intellij.mock.MockProject
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiManager
 import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.uast.UastMetaLanguage
 import junit.framework.TestCase
 import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.UastLanguagePlugin
@@ -61,6 +63,11 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
 
         CoreApplicationEnvironment.registerExtensionPoint(
                 Extensions.getRootArea(),
+                MetaLanguage.EP_NAME,
+                MetaLanguage::class.java)
+
+        CoreApplicationEnvironment.registerExtensionPoint(
+                Extensions.getRootArea(),
                 UastLanguagePlugin.extensionPointName,
                 UastLanguagePlugin::class.java)
 
@@ -76,6 +83,9 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
 
     private fun registerUastLanguagePlugins() {
         val area = Extensions.getRootArea()
+
+        area.getExtensionPoint(MetaLanguage.EP_NAME)
+                .registerExtension(UastMetaLanguage::class.java.newInstance())
 
         area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
                 .registerExtension(JavaUastLanguagePlugin())
