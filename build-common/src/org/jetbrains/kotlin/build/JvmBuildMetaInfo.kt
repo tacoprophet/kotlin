@@ -58,18 +58,23 @@ data class JvmBuildMetaInfo(
     }
 }
 
-fun JvmBuildMetaInfo(args: CommonCompilerArguments): JvmBuildMetaInfo =
-        JvmBuildMetaInfo(isEAP = KotlinCompilerVersion.isPreRelease(),
-                         compilerBuildVersion = KotlinCompilerVersion.VERSION,
-                         languageVersionString = args.languageVersion ?: LanguageVersion.LATEST_STABLE.versionString,
-                         apiVersionString = args.apiVersion ?: ApiVersion.LATEST_STABLE.versionString,
-                         coroutinesEnable = args.coroutinesState == CommonCompilerArguments.ENABLE,
-                         coroutinesWarn = args.coroutinesState == CommonCompilerArguments.WARN,
-                         coroutinesError = args.coroutinesState == CommonCompilerArguments.ERROR,
-                         multiplatformEnable = args.multiPlatform,
-                         metadataVersionMajor = JvmMetadataVersion.INSTANCE.major,
-                         metadataVersionMinor = JvmMetadataVersion.INSTANCE.minor,
-                         metadataVersionPatch = JvmMetadataVersion.INSTANCE.patch,
-                         bytecodeVersionMajor = JvmBytecodeBinaryVersion.INSTANCE.major,
-                         bytecodeVersionMinor = JvmBytecodeBinaryVersion.INSTANCE.minor,
-                         bytecodeVersionPatch = JvmBytecodeBinaryVersion.INSTANCE.patch)
+fun JvmBuildMetaInfo(args: CommonCompilerArguments): JvmBuildMetaInfo {
+    val languageVersion = args.languageVersion?.let((LanguageVersion)::fromVersionString) ?: LanguageVersion.LATEST_STABLE
+
+    return JvmBuildMetaInfo(
+            isEAP = KotlinCompilerVersion.isPreRelease() || !languageVersion.isStable,
+            compilerBuildVersion = KotlinCompilerVersion.VERSION,
+            languageVersionString = languageVersion.versionString,
+            apiVersionString = args.apiVersion ?: ApiVersion.LATEST_STABLE.versionString,
+            coroutinesEnable = args.coroutinesState == CommonCompilerArguments.ENABLE,
+            coroutinesWarn = args.coroutinesState == CommonCompilerArguments.WARN,
+            coroutinesError = args.coroutinesState == CommonCompilerArguments.ERROR,
+            multiplatformEnable = args.multiPlatform,
+            metadataVersionMajor = JvmMetadataVersion.INSTANCE.major,
+            metadataVersionMinor = JvmMetadataVersion.INSTANCE.minor,
+            metadataVersionPatch = JvmMetadataVersion.INSTANCE.patch,
+            bytecodeVersionMajor = JvmBytecodeBinaryVersion.INSTANCE.major,
+            bytecodeVersionMinor = JvmBytecodeBinaryVersion.INSTANCE.minor,
+            bytecodeVersionPatch = JvmBytecodeBinaryVersion.INSTANCE.patch
+    )
+}
