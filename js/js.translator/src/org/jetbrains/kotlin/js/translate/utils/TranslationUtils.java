@@ -180,15 +180,19 @@ public final class TranslationUtils {
 
     @NotNull
     public static JsName getNameForBackingField(@NotNull TranslationContext context, @NotNull PropertyDescriptor descriptor) {
-        DeclarationDescriptor containingDescriptor = descriptor.getContainingDeclaration();
-
-        if (!JsDescriptorUtils.isSimpleFinalProperty(descriptor) && !(containingDescriptor instanceof PackageFragmentDescriptor)) {
+        if (isReferenceToSyntheticBackingField(descriptor)) {
             return context.getNameForBackingField(descriptor);
         }
 
+        DeclarationDescriptor containingDescriptor = descriptor.getContainingDeclaration();
         return containingDescriptor instanceof PackageFragmentDescriptor ?
                                   context.getInnerNameForDescriptor(descriptor) :
                                   context.getNameForDescriptor(descriptor);
+    }
+
+    public static boolean isReferenceToSyntheticBackingField(@NotNull PropertyDescriptor descriptor) {
+        DeclarationDescriptor containingDescriptor = descriptor.getContainingDeclaration();
+        return !JsDescriptorUtils.isSimpleFinalProperty(descriptor) && !(containingDescriptor instanceof PackageFragmentDescriptor);
     }
 
     @NotNull

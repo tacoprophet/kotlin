@@ -6,6 +6,8 @@ fun box(): String {
 
     var r = typeOf(arr.iterator().asDynamic().nextChar())
     if (r != "number") return "fail1: $r"
+    r = typeOf(arr.iterator().asDynamic().next())
+    if (r != "object") return "fail1a: $r"
 
     var progression = 'A'..'Z'
     r = typeOf(progression.asDynamic().first)

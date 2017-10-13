@@ -8,9 +8,12 @@ open class A {
     val baz: Char = 'Q'
 
     var mutable: Char = 'W'
-        get() = field + 1
+        get() {
+            typeOfMutable += typeOf(field.asDynamic()) + ";"
+            return field + 1
+        }
         set(value) {
-            typeOfMutable = typeOf(js("value")) + ";" + typeOf(value)
+            typeOfMutable += typeOf(js("value")) + ";" + typeOf(value)
             field = value
         }
 }
@@ -58,7 +61,7 @@ fun box(): String {
     if (r7 != "object") return "fail7: $r7"
 
     a.mutable = 'E'
-    if (typeOfMutable != "object;number") return "fail8: $typeOfMutable"
+    if (typeOfMutable != "number;object;number") return "fail8: $typeOfMutable"
 
     val r9 = typeOf(a.mutable)
     if (r9 != "number") return "fail9: $r9"
