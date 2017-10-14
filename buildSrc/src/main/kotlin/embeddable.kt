@@ -3,6 +3,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.jvm.tasks.Jar
@@ -20,26 +21,51 @@ val packagesToRelocate =
                 "org.picocontainer",
                 "jline",
                 "gnu",
-                "javax.inject",
+//                "javax.inject",
                 "org.fusesource")
+
+fun ShadowJar.configureRelocation() {
+    relocate("com.google.protobuf", "org.jetbrains.kotlin.protobuf")
+    packagesToRelocate.forEach {
+        relocate(it, "$kotlinEmbeddableRootPackage.$it")
+    }
+    relocate("org.fusesource", "$kotlinEmbeddableRootPackage.org.fusesource") {
+        // TODO: remove "it." after #KT-12848 get addressed
+        exclude("org.fusesource.jansi.internal.CLibrary")
+    }
+}
 
 fun Project.embeddableCompiler(taskName: String = "embeddable", body: Jar.() -> Unit = {}): Jar {
 
-    val compilerJar = configurations.create("compilerJar")
+    val compilerJar = configurations.getOrCreate("compilerJar")
     dependencies.add(compilerJar.name, dependencies.project(":kotlin-compiler", configuration = "runtimeJar"))
 
     return task<ShadowJar>(taskName) {
         destinationDir = File(buildDir, "libs")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         from(compilerJar)
-        relocate("com.google.protobuf", "org.jetbrains.kotlin.protobuf")
-        packagesToRelocate.forEach {
-            relocate(it, "$kotlinEmbeddableRootPackage.$it")
-        }
-        relocate("org.fusesource", "$kotlinEmbeddableRootPackage.org.fusesource") {
-            // TODO: remove "it." after #KT-12848 get addressed
-            exclude("org.fusesource.jansi.internal.CLibrary")
-        }
+        configureRelocation()
+        body()
+    }
+}
+
+fun Project.embeddableCompilerDummyForRewriting(taskName: String = "embeddable", body: Jar.() -> Unit = {}): Jar {
+    val compilerJar = configurations.getOrCreate("compilerJar")
+    dependencies.add(compilerJar.name, dependencies.project(":kotlin-compiler", configuration = "runtimeJar"))
+
+    val dummyEmbeddableCompiler = task<ShadowJar>(taskName + "_dummy") {
+        classifier = "dummy"
+        destinationDir = File(buildDir, "libs")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from(compilerJar)
+        exclude("org/jetbrains/kotlin/**")
+    }
+
+    return task<ShadowJar>(taskName) {
+        destinationDir = File(buildDir, "libs")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from(dummyEmbeddableCompiler)
+        configureRelocation()
         body()
     }
 }
@@ -56,7 +82,7 @@ fun Project.rewriteDepsToShadedJar(originalJarTask: Jar, shadowJarTask: Zip, bod
         }
         shadowJarTask.apply {
             dependsOn(originalJarTask)
-            from(originalJarTask)
+            from(originalJarTask)// { include("**") }
             classifier = "shadow"
         }
         dependsOn(shadowJarTask)
@@ -65,4 +91,16 @@ fun Project.rewriteDepsToShadedJar(originalJarTask: Jar, shadowJarTask: Zip, bod
     }
 }
 
-fun Project.rewriteDepsToShadedCompiler(originalJarTask: Jar, body: Jar.() -> Unit = {}): Jar = rewriteDepsToShadedJar(originalJarTask, embeddableCompiler(), body)
+fun Project.rewriteDepsToShadedCompiler(originalJarTask: Jar, body: Jar.() -> Unit = {}): Jar {
+    originalJarTask.apply {
+        classifier = "original"
+    }
+    return task<ShadowJar>("rewrittenDepsJar") {
+        destinationDir = File(buildDir, "libs")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from(originalJarTask)
+        configureRelocation()
+        body()
+    }
+//    return rewriteDepsToShadedJar(originalJarTask, embeddableCompilerDummyForRewriting(), body)
+}
