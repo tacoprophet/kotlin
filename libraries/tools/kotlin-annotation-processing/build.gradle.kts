@@ -24,14 +24,20 @@ projectTest {
     workingDir = projectDir
 }
 
-noDefaultJar()
-tasks.remove(tasks.findByName("jar"))
-
-runtimeJar(task<ShadowJar>("jar"))  {
-    from(packedJars)
-    from(the<JavaPluginConvention>().sourceSets.getByName("main").output)
-    configureRelocation()
-}
+//noDefaultJar()
+//tasks.remove(tasks.findByName("jar"))
+//
+//runtimeJar(task<ShadowJar>("jar"))  {
+//    from(packedJars)
+//    from(the<JavaPluginConvention>().sourceSets.getByName("main").output)
+//    configureRelocation()
+//}
+runtimeJar(rewriteDepsToShadedCompiler(
+        task<ShadowJar>("shadowJar")  {
+            from(packedJars)
+            from(the<JavaPluginConvention>().sourceSets.getByName("main").output)
+        }
+))
 sourcesJar()
 javadocJar()
 

@@ -92,15 +92,15 @@ fun Project.rewriteDepsToShadedJar(originalJarTask: Jar, shadowJarTask: Zip, bod
 }
 
 fun Project.rewriteDepsToShadedCompiler(originalJarTask: Jar, body: Jar.() -> Unit = {}): Jar {
-    originalJarTask.apply {
-        classifier = "original"
-    }
-    return task<ShadowJar>("rewrittenDepsJar") {
-        destinationDir = File(buildDir, "libs")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from(originalJarTask)
-        configureRelocation()
-        body()
-    }
-//    return rewriteDepsToShadedJar(originalJarTask, embeddableCompilerDummyForRewriting(), body)
+//    originalJarTask.apply {
+//        classifier = "original"
+//    }
+//    return task<ShadowJar>("rewrittenDepsJar") {
+//        destinationDir = File(buildDir, "libs")
+//        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//        from(originalJarTask)
+//        configureRelocation()
+//        body()
+//    }
+    return rewriteDepsToShadedJar(originalJarTask, embeddableCompilerDummyForRewriting(), body)
 }
